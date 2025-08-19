@@ -1,0 +1,9 @@
+config BR2_PACKAGE_SYSMON
+    bool "sysmon"
+    help
+      System monitor application for STM32 devices.
+      Minimal system monitor: JSON lines (CPU/MEM/TEMP/NET), optional fb0 bars.
+
+config BR2_PACKAGE_SYSMON_AUTOSTART
+    bool "autostart sysmon at boot"
+    depends on BR2_PACKAGE_SYSMON
