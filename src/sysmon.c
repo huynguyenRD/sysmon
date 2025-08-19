@@ -1,6 +1,6 @@
 #define _GNU_SOURCE
 #include <stdio.h>
-#include "../../hal/include/hal_ui.h"
+#include "hal_ui.h"
 
 
 int main(void) {
