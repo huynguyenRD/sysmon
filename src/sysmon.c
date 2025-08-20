@@ -93,7 +93,11 @@ int main(void) {
 
         printf("{\"cpu\": %d, \"mem_used\": %d, \"temp\": %d}\n",
              cpu, mem_used, temp_c);
+        fflush(stdout);
 
+        if (lcd_on) {
+            hal_ui_bar3(cpu, mem_used, temp_c);
+        }
         usleep(interval_ms * 1000);
     }
 
