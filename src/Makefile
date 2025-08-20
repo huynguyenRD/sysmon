@@ -1,6 +1,6 @@
 CC ?= $(TARGET_CC)
 CFLAGS ?= -O2 -Wall
-LDFLAGS ?= -lhal
+LIBS = -lhal
 
 SRCS = sysmon.c
 OBJS = sysmon.o
@@ -9,7 +9,7 @@ TARGET = sysmon
 all: ${TARGET}
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
