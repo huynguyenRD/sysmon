@@ -7,6 +7,24 @@
 #include <time.h>
 #include "hal_ui.h"
 
+static long long rdll(const char* p) {
+    FILE *fp = fopen(p, "r");
+    if (!fp) {
+        perror("Failed to open file");
+        return -1;
+    }
+
+    long long v = -1;
+    if (fscanf(fp, "%lld", &v) != 1) {
+        perror("Failed to read long long value");
+        v = -1;
+        fclose(fp);
+        return -1;
+    }
+    fclose(fp);
+    return v;
+}
+
 static int read_thermal_mC(void) {
     return (int)rdll("/sys/class/thermal/thermal_zone0/temp");
 }
