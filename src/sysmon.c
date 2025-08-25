@@ -96,21 +96,57 @@ static int cpu_usage_pct(void) {
 }
 
 int main(void) {
-    printf("Sysmon application started - DL\n");
+    printf("Sysmon application started\n");
+    const char* iface = getenv("IFACE") ? getenv("IFACE") : "eth0";
     int interval_ms = getenv("INTERVAL_MS") ? atoi(getenv("INTERVAL_MS")) : 500;
     int lcd_on = getenv("HAL_LCD") ? atoi(getenv("HAL_LCD")) : 1;
     const char* card = getenv("HAL_CARD"); if(!card) card="/dev/dri/card0";
 
     cpu_usage_pct();
+    if (lcd_on) {
+        hal_init();
+        hal_lcd_init();
+        hal_ui_init(card);
+    }
     usleep(100*10000); // Allow time for CPU stats to stabilize
+
+    char p1[256];
+    char p2[256];
+    unsigned long long rx0 = 0;
+    unsigned long long tx0 = 0;
+    unsigned long long rx1 = 0;
+    unsigned long long tx1 = 0;
+    snprintf(p1, sizeof(p1), "/sys/class/net/%s/statistics/rx_bytes", iface);
+    snprintf(p2, sizeof(p2), "/sys/class/net/%s/statistics/tx_bytes", iface);
+    FILE* fr = fopen(p1, "r");
+    FILE* ft = fopen(p2, "r");
+    if (fr && ft) {
+        fscanf(fr, "%llu", &rx0);
+        fscanf(ft, "%llu", &tx0);
+    }
+    if (fr) fclose(fr);
+    if (ft) fclose(ft);
 
     for(;;) {
         int cpu = cpu_usage_pct();
         long mt, ma; read_mem_kB(&mt, &ma); int mem_used = (mt > 0) ? (int)((mt - ma) * 100 / mt) : -1;
         int t_mC = read_thermal_mC(); int temp_c = (t_mC >= 0) ? t_mC / 1000 : -1;
 
-        printf("{\"cpu\": %d, \"mem_used\": %d, \"temp\": %d}\n",
-             cpu, mem_used, temp_c);
+        fr = fopen(p1, "r");
+        ft = fopen(p2, "r");
+        if (fr && ft) {
+            fscanf(fr, "%llu", &rx1);
+            fscanf(ft, "%llu", &tx1);
+        }
+        if (fr) fclose(fr);
+        if (ft) fclose(ft);
+        double rx_rate = (rx1 >= rx0) ? (double)(rx1 - rx0)/1024.0/(interval_ms/1000.0) : 0.0;
+        double tx_rate = (tx1 >= tx0) ? (double)(tx1 - tx0)/1024.0/(interval_ms/1000.0) : 0.0;
+        rx0 = rx1;
+        tx0 = tx1;
+
+        printf("{\"cpu\": %d, \"mem_used\": %d, \"temp\": %d, \"rx_kBps\": %.1f, \"tx_kBps\": %.1f}\n",
+             cpu, mem_used, temp_c, tx_rate, rx_rate);
         fflush(stdout);
 
         if (lcd_on) {
